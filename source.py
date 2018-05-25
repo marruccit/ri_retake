@@ -4,6 +4,7 @@ import math
 import operator
 import csv
 import scipy
+import itertools
 import pandas as pd
 from scipy import spatial
 from nltk.stem import WordNetLemmatizer
@@ -147,6 +148,27 @@ def getCooccurenceMatrix(documents, window_size):
                 data.append(1.); row.append(i); col.append(j);
     cooccurrence_matrix=scipy.sparse.coo_matrix((data,(row,col)))
     return vocabulary,cooccurrence_matrix
+
+# Créer la matrice de cooccurence sur les mots sélectionnés
+def getCoocurrenceMatrix_2(documents, words):
+    matrix = pd.DataFrame(0, index=words, columns=words)
+    content_docs = '.\n'.join(documents.values())
+    content_docs = content_docs.replace("\n", "")
+    for sentence in content_docs.split("."):
+        wordsOccur = []
+        sentence=sentence.strip()
+        tokens=[token for token in tokenize_sentence(sentence) if token!=u""]
+        for token in tokens:
+            if token in words:
+                wordsOccur.append(token)
+        if len(wordsOccur) > 1:
+            listPairs = list(itertools.permutations(wordsOccur, 2))
+            for pair in listPairs:
+                matrix[pair[0]][pair[1]] += 1
+    return(matrix)
+
+
+
 
 # Read the save file and return the 10% last words
 def getKeepWords(filename, percent_selected=0.1):
