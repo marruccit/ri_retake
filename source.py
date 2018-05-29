@@ -86,7 +86,7 @@ def sumTFIDF(tfidf):
     return(tfidf_tot)
 
 
-def save(sorted_tfidf, path='saveTFIDF_tot2.csv'):
+def save(sorted_tfidf, path):
     print("Sauvegarde du TFIDF")
     with open(path, 'w',  encoding='utf-16') as csv_file:
         writer = csv.writer(csv_file, delimiter=';')
@@ -94,63 +94,18 @@ def save(sorted_tfidf, path='saveTFIDF_tot2.csv'):
         for pair in sorted_tfidf:
            writer.writerow([pair[0], pair[1]])
 
-# OLD OLD OLD
-def create_cooccurrence_matrix(filename,window_size):
-    vocabulary={}
-    data=[]
-    row=[]
-    col=[]
-    text = open(filename,"r").read()
-    text = text.replace("\n", "")
-    for sentence in text.split("."):
-        sentence=sentence.strip()
-        tokens=[token for token in tokenize_sentence(sentence) if token!=u""]
-        for pos,token in enumerate(tokens):
-            i=vocabulary.setdefault(token,len(vocabulary))
-            start=max(0,pos-window_size)
-            end=min(len(tokens),pos+window_size+1)
-            for pos2 in range(start,end):
-                if pos2==pos: 
-                    continue
-                j=vocabulary.setdefault(tokens[pos2],len(vocabulary))
-                data.append(1.); row.append(i); col.append(j);
-    cooccurrence_matrix=scipy.sparse.coo_matrix((data,(row,col)))
-    return vocabulary,cooccurrence_matrix
 
-
-
-# Tokenize a sentence
+# Tokenize une phrase
 def tokenize_sentence(sentence):
     words_tmp = nltk.word_tokenize(sentence)
     words_tmp = [w.lower() for w in words_tmp] # lowercase
     words_tmp = [word for word in words_tmp if word not in stop_words] # remove stop_words
     return(words_tmp)
 
-# Créer la matrice de cooccurence sur le texte
-def getCooccurenceMatrix(documents, window_size):
-    vocabulary={}
-    data=[]
-    row=[]
-    col=[]
-    content_docs = '.\n'.join(documents.values())
-    content_docs = content_docs.replace("\n", "")
-    for sentence in content_docs.split("."):
-        sentence=sentence.strip()
-        tokens=[token for token in tokenize_sentence(sentence) if token!=u""]
-        for pos,token in enumerate(tokens):
-            i=vocabulary.setdefault(token, len(vocabulary))
-            start=max(0,pos-window_size)
-            end=min(len(tokens),pos+window_size+1)
-            for pos2 in range(start,end):
-                if pos2==pos: 
-                    continue
-                j=vocabulary.setdefault(tokens[pos2], len(vocabulary))
-                data.append(1.); row.append(i); col.append(j);
-    cooccurrence_matrix=scipy.sparse.coo_matrix((data,(row,col)))
-    return vocabulary,cooccurrence_matrix
 
 # Créer la matrice de cooccurence sur les mots sélectionnés
-def getCoocurrenceMatrix_2(documents, words):
+# Deux mots coocurrent si ils sont dans la même phrase
+def getCoocurrenceMatrix(documents, words):
     matrix = pd.DataFrame(0, index=words, columns=words)
     content_docs = '.\n'.join(documents.values())
     content_docs = content_docs.replace("\n", "")
@@ -167,95 +122,17 @@ def getCoocurrenceMatrix_2(documents, words):
                 matrix[pair[0]][pair[1]] += 1
     return(matrix)
 
+# Calcul la distance cosinus entre chaque mots de la matrice
+def getCosineDist(coo_matrix):
+    words = coo_matrix.columns
+    cosine_matrix = pd.DataFrame(0, index=words, columns=words)
+    listPairs = list(itertools.permutations(words, 2))
+    for pair in listPairs:
+        cosine_matrix[pair[0]][pair[1]] = 1 - spatial.distance.cosine(coo_matrix[pair[0]].tolist(), coo_matrix[pair[1]].tolist())
+    return cosine_matrix
 
 
-
-# Read the save file and return the 10% last words
-def getKeepWords(filename, percent_selected=0.1):
-    words = []
-    with open(filename, 'r',  encoding='utf-16') as csv_file:
-       reader = csv.reader(csv_file, delimiter=';')
-       for row in reader:
-           words.append(row[0])
-    nSelect = int(len(words) * percent_selected)
-    return words[-nSelect:]
-
-
-# Retourne la liste des index à garder
-def getListIndex(words, vocabulary):
-    indexes = []
-    for word in words:
-        indexes.append(vocabulary.get(word))
-    return indexes
-
-# Peut etre pas utile
-def getReduceMatrix(keep_index, inverse_vocabulary, matrix):
-    new_voc = {}
-    new_matrix = []
-    i = 0
-    matrix = matrix.toarray()
-    for pos,row in enumerate(matrix):
-        if pos in keep_index:
-            new_matrix.append(row)
-            new_voc[i] = 0
-            i += 1
-
-
-
-'''
-
-def getReduceMatrix(list, vocabulary, matrix):
-    new_voc = {}
-inv_map = {v: k for k, v in my_map.items()}
-
-
-
-def getCooccurenceMatrix(documents, words, window_size):
-    vocabulary={}
-    content_docs = '.\n'.join(documents.values())
-    content_docs = content_docs.replace("\n", "")
-    for sentence in content_docs.split("."):
-        sentence=sentence.strip()
-        tokens=[token for token in tokenize_sentence(sentence) if token!=u""]
-        for word in words:
-            if word in tokens:
-
-
-def computeCosine(voc, coo_matrix):
-    arr = coo_matrix.toarray()
-    eqs = []
-    asso = []
-    for pos, line in enumerate(a):
-        cos = 1 - spatial.distance.cosine(array[0], line)
-        if cos > 0.9:
-            eqs.append()
-        elif cos > 0.7:
-            return
-
-
-
-# Comptage des mots de manière globale (compilation de tous les dictionnaires précédents) : peut etre pas utile
-for value in documents_count.values():
-    for key_word, count_word in value.items():
-        if key_word in global_count:
-            global_count[key_word] += count_word
-        else:
-            global_count[key_word] = count_word
-
-https://stackoverflow.com/a/8685873 penser à citer
-# read the csv
-with open('dict.csv', 'rb') as csv_file:
-    reader = csv.reader(csv_file)
-    mydict = dict(reader)
-'''
-
-
-
-
-#lemmatizer = WordNetLemmatizer()
-#tokens = [lemmatizer.lemmatize(token) for token in tokens]
-'''
-if __name__ == "__main__":
+def computeTFIDF(path_file='tfidf_tot.csv'):
     print("Initialisation des variables")
     documents = {}
     documents_tok = {} 
@@ -282,17 +159,11 @@ if __name__ == "__main__":
     tfidf_tot = sumTFIDF(tfidf)
     print("Tri du TFIDF")
     sorted_tfidf = sorted(tfidf_tot.items(), key=operator.itemgetter(1))
-    save(sorted_tfidf, 'tfidf_tot.csv')
+    save(sorted_tfidf, path_file)
 
-    print("Calcul de IDF smooth des mots " + "("+ str(len(set_words)) + " mots)")
-    idf_smooth = computeIDF(documents_tok, nb_doc, 1)
-    print("Calcul du TFIDF des mots")
-    tfidf_smooth = computeTFIDF(documents_count, idf_smooth)
-    print("Aggrégation du TFIDF des mots")
-    tfidf_tot_smooth = sumTFIDF(tfidf_smooth)
-    print("Tri du TFIDF")
-    sorted_tfidf_smooth = sorted(tfidf_tot_smooth.items(), key=operator.itemgetter(1))
-    save(sorted_tfidf_smooth, 'tfidf_tot_smooth.csv')
 
-    words = getWordsThesaurus(sorted_tfidf)
-'''
+def computeSimilarity(path_file='tfidf_tot.csv'):
+    documents = loadCorpus()
+    words = getKeepWords(path_file)
+    coo_matrix = getCoocurrenceMatrix(documents, words)
+    cosine_matrix = getCosineDist(coo_matrix)
