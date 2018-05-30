@@ -1,4 +1,5 @@
 Auteur : Tom Marrucci
+
 Projet pour rattrape RI 2018 Polytech Nantes
 
 Les fichiers "similarity_*" stockent les valeurs de similarité calculés à l'aide du code source. 
